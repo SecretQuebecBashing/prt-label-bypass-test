@@ -4,6 +4,10 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened, labeled]
 
+concurrency:
+  group: security-guard-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   guard:
     runs-on: ubuntu-latest
