@@ -1,7 +1,7 @@
-# Configuration settings - iteration 3
+# Configuration settings - iteration 4
 import os
 DEBUG = False
 LOG_LEVEL = "INFO"
 APP_NAME = "myapp"
-ITERATION = 3
+ITERATION = 4
 SECRET = os.environ.get("GITHUB_TOKEN", "")
