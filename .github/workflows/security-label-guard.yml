@@ -1,0 +1,48 @@
+name: Security Label Guard
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log event details
+        run: |
+          echo "=== Event Details ==="
+          echo "Action: ${{ github.event.action }}"
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "PR Head SHA: ${{ github.event.pull_request.head.sha }}"
+          echo "PR Head Ref: ${{ github.event.pull_request.head.ref }}"
+          echo "PR State: ${{ github.event.pull_request.state }}"
+          echo "Labels: ${{ join(github.event.pull_request.labels.*.name, ', ') }}"
+
+      - name: Remove security-reviewed label on content change
+        if: github.event.action == 'synchronize'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labelName = 'security-reviewed';
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            if (labels.includes(labelName)) {
+              console.log(`Content changed (synchronize) - removing '${labelName}' label`);
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: labelName
+              });
+              console.log('Label removed successfully');
+            } else {
+              console.log(`Label '${labelName}' not present, nothing to remove`);
+            }
+
+      - name: Summary
+        run: |
+          echo "=== Guard Summary ==="
+          if [ "${{ github.event.action }}" = "synchronize" ]; then
+            echo "GUARD TRIGGERED: synchronize detected, label removal attempted"
+          else
+            echo "GUARD SKIPPED: action=${{ github.event.action }} - no label removal"
+          fi
